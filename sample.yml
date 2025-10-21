@@ -1,13 +1,11 @@
-AWSTemplateFormatVersion: 2010-09-09
-Description: ---
-Metadata: 
+AWS cloudformation {resource}
+intransic functions 
+- !Ref
+- !FindInMap
+- !GetAtt
+- !Equals [value_1, value_2]
+- !Join [ delimiter, [ comma-delimited list of values ] ]
+- !If [condition_name, value_if_true, value_if_false]
+- !Oven 
 
-Parameters: 
-
-Mappings: 
-
-Conditions: 
-
-Resources: 
-
-Outputs:
+DependsOn

@@ -1,0 +1,97 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: "S3 to EC2 Integration Sample"
+
+Parameters:
+  s3BucketName:
+    Type: String
+    Description: "The S3 Bucket Name"
+    Default: "jlrt-trn-s3-ec2-integration"
+
+  instanceType:
+    Description: "EC2 Instance Type"
+    Type: String
+    Default: "t3.micro"
+    AllowedValues:
+      - "t3.micro"
+      - "t3.small"
+
+  keyPairName:
+    Description: "EC2 KeyPair Name"
+    Type: String
+    Default: "aws-trn-2025"
+
+Resources: 
+  myS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties: 
+      BucketName: !Ref s3BucketName
+
+  ec2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      BlockDeviceMappings: 
+        - DeviceName: "/dev/sda1"
+          Ebs:
+            VolumeSize: 8
+      ImageId: "ami-0341d95f75f311023"
+      InstanceType: !Ref instanceType
+      KeyName: !Ref keyPairName
+      IamInstanceProfile: !Ref ec2InstanceProfile
+      SecurityGroupIds: 
+        - !GetAtt ec2SecurityGroup.GroupId
+
+  ec2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "CFN S3 EC2 Integration Security Group" # Required
+      GroupName: "cfnS3Ec2IntegSecGroup"
+      SecurityGroupEgress: 
+        - CidrIp: "0.0.0.0/0"
+          Description: "Allow all outbound"
+          FromPort: -1
+          IpProtocol: "-1"
+          ToPort: -1
+      SecurityGroupIngress: 
+        - CidrIp: "0.0.0.0/0"
+          Description: "Allow SSH"
+          FromPort: 22
+          IpProtocol: "tcp"
+          ToPort: 22
+      VpcId: "vpc-0ad8976c3063a8d73"
+  
+  s3ec2Role:
+    Type: AWS::IAM::Role
+    #Only create the role after the s3 bucket has been created
+    DependsOn: myS3Bucket 
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal: 
+              Service:
+                - ec2.amazonaws.com
+            Action: 
+              - "sts:AssumeRole" # Need daw, galing kay GPT
+        
+      Description: "S3 to EC2 Integration using CFN"
+      RoleName: "s3ec2RoleCfn"
+      Policies:
+        - PolicyName: "s3ec2Policy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: 
+                  - "s3:GetObject"
+                  - "s3:ListBucket"
+                  - "s3:PutObject"
+                Resource:
+                  - !GetAtt myS3Bucket.Arn
+                  - !Join ["", [!GetAtt myS3Bucket.Arn, "/*"]]
+
+  ec2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: # Required
+        - !Ref s3ec2Role
