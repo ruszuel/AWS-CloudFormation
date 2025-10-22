@@ -111,7 +111,8 @@ Resources:
     Type: AWS::ApiGateway::Deployment
     Properties:
       RestApiId: !Ref restApi
-      StageName: "dev"
+    DependsOn:
+      - helloRestMethod
   
   restApiLambdaPermission:
     Type: AWS::Lambda::Permission
