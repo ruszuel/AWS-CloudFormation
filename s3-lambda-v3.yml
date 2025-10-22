@@ -48,7 +48,7 @@ Resources:
               Service:
                 - lambda.amazonaws.com
             Action: 
-              - "sts:AssumeRole" # Need daw, galing kay GPT
+              - "sts:AssumeRole"
         
       Description: !Join [ " ", [ "IAM ROle for",  !Ref functionName, "lambda function"]]
       RoleName: !Join ["-", [!Ref functionName, "lambda", "role"]]

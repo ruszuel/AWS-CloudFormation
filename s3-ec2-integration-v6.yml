@@ -72,7 +72,7 @@ Resources:
               Service:
                 - ec2.amazonaws.com
             Action: 
-              - "sts:AssumeRole" # Need daw, galing kay GPT
+              - "sts:AssumeRole" 
         
       Description: "S3 to EC2 Integration using CFN"
       RoleName: "s3ec2RoleCfn"

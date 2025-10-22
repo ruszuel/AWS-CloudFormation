@@ -9,3 +9,6 @@ intransic functions
 - !Oven 
 
 DependsOn
+
+always aim for loosely coupled design!!!!
+make dynamic code, make your own resuable library
