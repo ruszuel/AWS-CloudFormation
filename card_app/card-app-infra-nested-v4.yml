@@ -56,6 +56,10 @@ Parameters:
     Description: "Template URL"
     Type: String
     Default: "https://jlrt-trn-cfn-scripts.s3.us-east-1.amazonaws.com/template/lambda-function.yml"
+  templateApiStackURL:
+    Description: "API Template URL"
+    Type: String
+    Default: "https://jlrt-trn-cfn-scripts.s3.us-east-1.amazonaws.com/template/api-function-v0.yml"
 
 Resources: 
   restApi:
@@ -65,11 +69,15 @@ Resources:
       Name: !Ref restApiName
 
   listApiResource:
-    Type: AWS::ApiGateway::Resource
+    Type: AWS::CloudFormation::Stack
     Properties:
-      ParentId: !GetAtt restApi.RootResourceId
-      PathPart: list
-      RestApiId: !Ref restApi
+      TemplateURL: !Ref templateApiStackURL
+      Parameters:
+        restApiResourceId: !GetAtt restApi.RootResourceId
+        templateRestApi: !Ref restApi
+        apiRoutes: list
+        routeHttpMethod: "GET"
+        lambdaFunctionArn: !GetAtt listLambdaFunction.Outputs.functionArn
 
   registerApiResource:
     Type: AWS::ApiGateway::Resource
@@ -86,18 +94,6 @@ Resources:
       RestApiId: !Ref restApi
   
   # List Lambda Function
-  # listLambdaFunction:
-  #   Type: AWS::Lambda::Function
-  #   Properties:
-  #     Code:
-  #       S3Bucket: !Ref lambdaS3Bucket
-  #       S3Key: !Join [ "/", ["lambda", !Ref listLambdaZipFile]]
-  #     Description: "Sample Lambda Hello API using CFN"
-  #     FunctionName: !Ref listFunctionName
-  #     Handler: !Ref listLambdaHandler
-  #     Role: !GetAtt listLambdaFunctionRole.Arn # Required
-  #     Runtime: "python3.12"
-  #     Timeout: 60
   listLambdaFunction:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -110,18 +106,6 @@ Resources:
         functionHandler: !Ref listLambdaHandler
 
   # Register Lambda Function
-  # registerLambdaFunction:
-  #   Type: AWS::Lambda::Function
-  #   Properties:
-  #     Code:
-  #       S3Bucket: !Ref lambdaS3Bucket
-  #       S3Key: !Join [ "/", ["lambda", !Ref registerLambdaZipFile]]
-  #     Description: "Sample Lambda Hello API using CFN"
-  #     FunctionName: !Ref registerFunctionName
-  #     Handler: !Ref registerLambdaHandler
-  #     Role: !GetAtt registerLambdaFunctionRole.Arn # Required
-  #     Runtime: "python3.12"
-  #     Timeout: 60
   registerLambdaFunction:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -134,18 +118,6 @@ Resources:
         functionHandler: !Ref registerLambdaHandler
 
   # Status Update Lambda Function
-  # statusLambdaFunction:
-  #   Type: AWS::Lambda::Function
-  #   Properties:
-  #     Code:
-  #       S3Bucket: !Ref lambdaS3Bucket
-  #       S3Key: !Join [ "/", ["lambda", !Ref statusLambdaZipFile]]
-  #     Description: "Sample Lambda Hello API using CFN"
-  #     FunctionName: !Ref statusFunctionName
-  #     Handler: !Ref statusLambdaHandler
-  #     Role: !GetAtt statusLambdaFunctionRole.Arn # Required
-  #     Runtime: "python3.12"
-  #     Timeout: 60
   statusLambdaFunction:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -156,121 +128,8 @@ Resources:
         lambdaZipFile: !Ref statusLambdaZipFile
         functionDescription: "Card Status Update Lambda Function"
         functionHandler: !Ref statusLambdaHandler
-
-  # List Lambda IAM ExecutionRole
-  # listLambdaFunctionRole:
-  #   Type: AWS::IAM::Role
-  #   Properties:
-  #     AssumeRolePolicyDocument:
-  #       Version: "2012-10-17"
-  #       Statement:
-  #         - Effect: "Allow"
-  #           Principal: 
-  #             Service:
-  #               - lambda.amazonaws.com
-  #           Action: 
-  #             - "sts:AssumeRole"
-        
-  #     Description: !Join [ " ", [ "IAM ROle for",  !Ref listFunctionName, "lambda function"]]
-  #     RoleName: !Join ["-", [!Ref listFunctionName, "lambda", "role"]]
-  #     Policies:
-  #       - PolicyName: !Join [ "", [!Ref listFunctionName, "execution", "policy"]]
-  #         PolicyDocument:
-  #           Version: "2012-10-17"
-  #           Statement:
-  #             - Effect: "Allow"
-  #               Action: 
-  #                 - "logs:CreateLogGroup"
-  #               Resource:
-  #                 - "arn:aws:logs:*:*:*"
-  #             - Effect: "Allow"
-  #               Action: 
-  #                 - "logs:CreateLogStream"
-  #                 - "logs:PutLogEvents"
-  #               Resource:
-  #                 - !Join ["", ["arn:aws:logs:*:*:log-group:/aws/lambda/", !Ref listFunctionName ,":*"]]
-
-  # Register Lambda IAM ExecutionRole
-  # registerLambdaFunctionRole:
-  #   Type: AWS::IAM::Role
-  #   Properties:
-  #     AssumeRolePolicyDocument:
-  #       Version: "2012-10-17"
-  #       Statement:
-  #         - Effect: "Allow"
-  #           Principal: 
-  #             Service:
-  #               - lambda.amazonaws.com
-  #           Action: 
-  #             - "sts:AssumeRole"
-        
-  #     Description: !Join [ " ", [ "IAM ROle for",  !Ref registerFunctionName, "lambda function"]]
-  #     RoleName: !Join ["-", [!Ref registerFunctionName, "lambda", "role"]]
-  #     Policies:
-  #       - PolicyName: !Join [ "", [!Ref registerFunctionName, "execution", "policy"]]
-  #         PolicyDocument:
-  #           Version: "2012-10-17"
-  #           Statement:
-  #             - Effect: "Allow"
-  #               Action: 
-  #                 - "logs:CreateLogGroup"
-  #               Resource:
-  #                 - "arn:aws:logs:*:*:*"
-  #             - Effect: "Allow"
-  #               Action: 
-  #                 - "logs:CreateLogStream"
-  #                 - "logs:PutLogEvents"
-  #               Resource:
-  #                 - !Join ["", ["arn:aws:logs:*:*:log-group:/aws/lambda/", !Ref registerFunctionName ,":*"]]
-
-  # Status Update Lambda IAM ExecutionRole
-  # statusLambdaFunctionRole:
-  #   Type: AWS::IAM::Role
-  #   Properties:
-  #     AssumeRolePolicyDocument:
-  #       Version: "2012-10-17"
-  #       Statement:
-  #         - Effect: "Allow"
-  #           Principal: 
-  #             Service:
-  #               - lambda.amazonaws.com
-  #           Action: 
-  #             - "sts:AssumeRole"
-        
-  #     Description: !Join [ " ", [ "IAM ROle for",  !Ref statusFunctionName, "lambda function"]]
-  #     RoleName: !Join ["-", [!Ref statusFunctionName, "lambda", "role"]]
-  #     Policies:
-  #       - PolicyName: !Join [ "", [!Ref statusFunctionName, "execution", "policy"]]
-  #         PolicyDocument:
-  #           Version: "2012-10-17"
-  #           Statement:
-  #             - Effect: "Allow"
-  #               Action: 
-  #                 - "logs:CreateLogGroup"
-  #               Resource:
-  #                 - "arn:aws:logs:*:*:*"
-  #             - Effect: "Allow"
-  #               Action: 
-  #                 - "logs:CreateLogStream"
-  #                 - "logs:PutLogEvents"
-  #               Resource:
-  #                 - !Join ["", ["arn:aws:logs:*:*:log-group:/aws/lambda/", !Ref statusFunctionName ,":*"]]
-
-  # List Rest Method
-  listRestMethod:
-    Type: AWS::ApiGateway::Method
-    Properties:
-      ApiKeyRequired: false
-      AuthorizationType: "NONE"
-      HttpMethod: "GET"
-      Integration:
-        Type: AWS_PROXY
-        IntegrationHttpMethod: POST
-        Uri: !Join [ "", [ "arn:aws:apigateway:", !Ref "AWS::Region", ":lambda:path/2015-03-31/functions/", !GetAtt listLambdaFunction.Outputs.functionArn, "/invocations"] ]
-      ResourceId: !Ref listApiResource
-      RestApiId: !Ref restApi
-
-  # Register Rest Method
+  
+ # Register Rest Method
   registerRestMethod:
     Type: AWS::ApiGateway::Method
     Properties:
@@ -316,19 +175,10 @@ Resources:
     Properties:
       RestApiId: !Ref restApi
     DependsOn:
-      - listRestMethod
+      - listApiResource
       - registerRestMethod
       - statusRestMethod
-
-  # List API Lambda Permission
-  listApiLambdaPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: "lambda:invokeFunction"
-      FunctionName: !GetAtt listLambdaFunction.Outputs.functionArn
-      Principal: "apigateway.amazonaws.com" 
-      SourceArn: !Join [ "", [ "arn:aws:execute-api:", !Ref "AWS::Region", ":",!Ref "AWS::AccountId", ":", !Ref restApi, "/*" ] ]
-  
+ 
   # Register API Lambda Permission
   registerApiLambdaPermission:
     Type: AWS::Lambda::Permission
